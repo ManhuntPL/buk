@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 10000;
 
 # Klucz API i adres backendu
 API_KEY = "53e707bd6fcfd4e60ba0f74dc9a708c1"
