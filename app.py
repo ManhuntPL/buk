@@ -1,10 +1,6 @@
 import requests
 from datetime import datetime
 
-@app.route('/health')
-def health():
-    return "OK", 200
-    
 # Klucz API i adres backendu
 API_KEY = "53e707bd6fcfd4e60ba0f74dc9a708c1"
 BASE_URL = "https://buk-wzmy.onrender.com"
