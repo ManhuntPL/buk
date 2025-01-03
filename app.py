@@ -1,18 +1,6 @@
 import requests
 from datetime import datetime
 
-const express = require('express')
-const app = express()
-const port = process.env.PORT || 4000;
-
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
-
 # Klucz API i adres backendu
 API_KEY = "53e707bd6fcfd4e60ba0f74dc9a708c1"
 BASE_URL = "https://buk-wzmy.onrender.com"
