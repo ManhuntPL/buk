@@ -1,88 +1,100 @@
-from flask import Flask, jsonify, request
 import requests
+from datetime import datetime
 
-app = Flask(__name__)
-
-# Twój klucz API
+# Klucz API i adres backendu
 API_KEY = "53e707bd6fcfd4e60ba0f74dc9a708c1"
-BASE_URL = "https://v3.football.api-sports.io"
+BASE_URL = "https://buk-wzmy.onrender.com"
 
-# Lista ID topowych lig
-TOP_LEAGUES = {
-    "Premier League": "39",
-    "Ligue 1": "61",
-    "Bundesliga": "78",
-    "Serie A": "135",
-    "La Liga": "140"
-}
+# Funkcja do pobierania dzisiejszych meczów z wybranych lig
 
-# Endpoint: Wyniki z sezonu 2024 dla topowych lig
-@app.route('/season_results', methods=['GET'])
-def get_season_results():
-    league = request.args.get('league')
-    if league not in TOP_LEAGUES.values():
-        return jsonify({"error": "Invalid league. Allowed leagues are Premier League, Ligue 1, Bundesliga, Serie A, La Liga."}), 400
-
+def get_today_matches(league_ids):
+    today = datetime.today().strftime("%Y-%m-%d")
+    endpoint = f"{BASE_URL}/matches"
     headers = {
-        "x-rapidapi-key": API_KEY,
-        "x-rapidapi-host": "v3.football.api-sports.io"
+        "Authorization": f"Bearer {API_KEY}"
+    }
+
+    matches = []
+    for league_id in league_ids:
+        params = {
+            "date": today,
+            "league": league_id,
+            "season": 2024
+        }
+        response = requests.get(endpoint, headers=headers, params=params)
+        if response.status_code == 200:
+            league_matches = response.json()
+            matches.extend(league_matches.get("data", []))
+        else:
+            print(f"Błąd pobierania meczów dla ligi {league_id}: {response.status_code}")
+    return matches
+
+# Funkcja do pobierania wyników drużyn z całego sezonu
+
+def get_team_results(team_id, season):
+    endpoint = f"{BASE_URL}/results"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
     }
     params = {
-        "league": league,
-        "season": "2024",
-        "status": "FT"
+        "team": team_id,
+        "season": season
     }
-    response = requests.get(f"{BASE_URL}/fixtures", headers=headers, params=params)
-    return jsonify(response.json())
+    response = requests.get(endpoint, headers=headers, params=params)
+    if response.status_code == 200:
+        return response.json().get("data", [])
+    else:
+        print(f"Błąd pobierania wyników dla drużyny {team_id}: {response.status_code}")
+        return []
 
-# Endpoint: Analiza danych pod kątem najbardziej prawdopodobnych wyników
-@app.route('/analyze_match', methods=['GET'])
-def analyze_match():
-    league = request.args.get('league')
-    team1 = request.args.get('team1')
-    team2 = request.args.get('team2')
+# Funkcja do pobierania kursów dla meczów
 
-    if league not in TOP_LEAGUES.values():
-        return jsonify({"error": "Invalid league. Allowed leagues are Premier League, Ligue 1, Bundesliga, Serie A, La Liga."}), 400
-
+def get_odds_for_match(match_id):
+    endpoint = f"{BASE_URL}/odds"
     headers = {
-        "x-rapidapi-key": API_KEY,
-        "x-rapidapi-host": "v3.football.api-sports.io"
+        "Authorization": f"Bearer {API_KEY}"
     }
-
-    # Wyniki z sezonu
-    season_results = requests.get(f"{BASE_URL}/fixtures", headers=headers, params={
-        "league": league,
-        "season": "2024",
-        "status": "FT"
-    }).json()
-
-    # Mecze bezpośrednie
-    h2h = requests.get(f"{BASE_URL}/fixtures/headtohead", headers=headers, params={
-        "h2h": f"{team1}-{team2}"
-    }).json()
-
-    # Kursy
-    odds = requests.get(f"{BASE_URL}/odds", headers=headers, params={
-        "league": league,
-        "season": "2024"
-    }).json()
-
-    # Analiza (przykład uproszczony)
-    analysis = {
-        "team1": team1,
-        "team2": team2,
-        "recent_results": season_results["response"],
-        "head_to_head": h2h["response"],
-        "odds": odds["response"]
+    params = {
+        "match": match_id
     }
+    response = requests.get(endpoint, headers=headers, params=params)
+    if response.status_code == 200:
+        return response.json().get("data", [])
+    else:
+        print(f"Błąd pobierania kursów dla meczu {match_id}: {response.status_code}")
+        return []
 
-    return jsonify(analysis)
+# Funkcja główna
 
-# Endpoint: Lista topowych lig
-@app.route('/leagues', methods=['GET'])
-def get_allowed_leagues():
-    return jsonify(TOP_LEAGUES)
+def main():
+    league_ids = [39, 135, 140, 61, 78]  # ID lig
+    season = 2024
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    # Pobieranie dzisiejszych meczów
+    matches = get_today_matches(league_ids)
+    print(f"Dzisiejsze mecze: {len(matches)}")
+
+    for match in matches:
+        home_team = match["homeTeam"]["name"]
+        away_team = match["awayTeam"]["name"]
+        match_id = match["id"]
+        home_team_id = match["homeTeam"]["id"]
+        away_team_id = match["awayTeam"]["id"]
+
+        print(f"\nMecz: {home_team} vs {away_team}")
+
+        # Forma drużyn
+        home_results = get_team_results(home_team_id, season)
+        away_results = get_team_results(away_team_id, season)
+        print(f"Forma {home_team}: {len(home_results)} meczów")
+        print(f"Forma {away_team}: {len(away_results)} meczów")
+
+        # Pobieranie kursów
+        odds = get_odds_for_match(match_id)
+        if odds:
+            print(f"Kursy dla meczu {home_team} vs {away_team}: {odds}")
+        else:
+            print("Brak danych o kursach")
+
+if __name__ == "__main__":
+    main()
