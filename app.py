@@ -98,3 +98,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    from flask import Flask
+
+    app = Flask(__name__)
+
+    @app.route('/')
+    def run_main():
+        main()
+        return "Dane zostały zaktualizowane."
+
+    app.run(host="0.0.0.0", port=port)
+
