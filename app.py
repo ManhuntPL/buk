@@ -54,7 +54,7 @@ def home():
     return jsonify({
         "message": "Welcome to Football Fixtures API",
         "endpoints": {
-            "/today-fixtures": "Get today's fixtures for top European leagues"
+            "/fixtures?league=140&season=2024&date=2025-01-03": "Get today's fixtures for top European leagues"
         }
     })
 
