@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime
+app.run(host="0.0.0.0", port=port)
 
 # Klucz API i adres backendu
 API_KEY = "53e707bd6fcfd4e60ba0f74dc9a708c1"
